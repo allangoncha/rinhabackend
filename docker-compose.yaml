@@ -50,8 +50,8 @@ services:
       POSTGRES_DB: rinhadb
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./postgres.conf:/docker-entrypoint-initdb.d/postgresql.conf
-    command: postgres -c config_file=/docker-entrypoint-initdb.d/postgresql.conf
+      - ./postgres.conf:/docker-entrypoint-initdb.d/postgres.conf
+    command: postgres -c config_file=/docker-entrypoint-initdb.d/postgres.conf
     ports:
       - 5432:5432
     deploy:
