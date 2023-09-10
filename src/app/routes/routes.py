@@ -1,6 +1,7 @@
 from src.app import app
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from typing import List, Optional
 import psycopg2, os
 
 #Load Env's
@@ -20,7 +21,7 @@ class Pessoas(BaseModel):
     apelido: str
     nome: str 
     nascimento: str #AAAA-MM-DD
-    stack: list
+    stack: Optional[List[str]]
 
 @app.post("/pessoas", response_model=Pessoas)
 def pessoas(pessoas: Pessoas):
