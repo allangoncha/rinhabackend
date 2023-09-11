@@ -30,7 +30,7 @@ class Pessoas(BaseModel):
     stack: Optional[List[str]]
 
 @app.post("/pessoas")
-def pessoas(pessoas: Pessoas):
+async def pessoas(pessoas: Pessoas):
     id_pessoas = uuid.uuid4()
 
     if pessoas.stack != None:
@@ -62,3 +62,32 @@ def pessoas(pessoas: Pessoas):
         return {
                 "Exception": {e}
                 }
+
+@app.get("/pessoas/{id_pessoa}")
+async def searchPessoasById(id_pessoa: str):
+    select_idpessoa = f"SELECT * from public.pessoas where id = '{id_pessoa}'"
+    select_response = conn.execute(text(select_idpessoa)).fetchall()
+    
+    if bool(select_response):
+        
+        for row in select_response:
+            
+            if row[4] == 'null':
+                stack = None
+            else:
+                #Clean Stack and convert to list using split()
+                cleaned_stack = row[4].strip('{}')
+                stack = cleaned_stack.split(',')
+            
+            response = {
+                        "id" : row[0],
+                        "apelido" : row[1],
+                        "nome" : row[2],
+                        "nascimento" : row[3],
+                        "stack" : stack
+                    }
+    
+            return JSONResponse(content=response, status_code=200)
+    
+    
+    return JSONResponse(content=response, status_code=404)
