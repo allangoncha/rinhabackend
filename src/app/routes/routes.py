@@ -1,10 +1,9 @@
 from src.app import app
-from fastapi import Response
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
-from sqlalchemy import insert, create_engine, text
+from sqlalchemy import create_engine, text
 import os, uuid
 
 #Load Env's
@@ -30,14 +29,20 @@ class Pessoas(BaseModel):
     nascimento: str #AAAA-MM-DD
     stack: Optional[List[str]]
 
-@app.post("/pessoas", response_model=Pessoas, status_code = 201)
-def pessoas(pessoas: Pessoas, response: Response):
+@app.post("/pessoas")
+def pessoas(pessoas: Pessoas):
     id_pessoas = uuid.uuid4()
 
     if pessoas.stack != None:
         stack_array = "{" + ",".join(pessoas.stack) + "}"
     else:
         stack_array = 'null'
+        
+    select_pessoas = f"SELECT apelido from public.pessoas where apelido = '{pessoas.apelido}'"
+    select_response = conn.execute(text(select_pessoas)).fetchone()
+        
+    if select_response:
+        return JSONResponse(content="Apelido já existente na base.", status_code=422)
 
     try:
         insert_pessoas = f"""
@@ -51,8 +56,8 @@ def pessoas(pessoas: Pessoas, response: Response):
         headers = {"Location": f'pessoas/{id_pessoas}'}
         content = "Hello, world!"
         
-        return JSONResponse(content=content, headers=headers)
-
+        return JSONResponse(content=content, headers=headers, status_code=201)
+        
     except Exception as e:
         return {
                 "Exception": {e}
