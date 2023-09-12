@@ -5,7 +5,11 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, text
 from fastapi import Query
-import os, uuid
+import os, uuid, redis, re
+
+#Redis config
+pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
+redis = redis.Redis(connection_pool=pool)
 
 #Load Env's
 load_dotenv()
@@ -41,11 +45,22 @@ class Pessoa(BaseModel):
 async def pessoas(pessoas: Pessoas):
     id_pessoas = uuid.uuid4()
 
+    #Validations
     if pessoas.stack != None:
         stack_array = "{" + ",".join(pessoas.stack) + "}"
     else:
         stack_array = 'null'
         
+    if len(pessoas.apelido) > 32:
+        return JSONResponse(content="Apelido excede o tamanho máximo de 32 caracteres.", status_code=422)
+    
+    if len(pessoas.nome) > 100:
+        return JSONResponse(content="Nome excede o tamanho máximo de 100 caracteres.", status_code=422)
+    
+    regex = re.compile('^\d{4}-\d{2}-\d{2}$')
+    if bool(regex.match(pessoas.nascimento)) == False:
+        return JSONResponse(content="Formato do campo nascimento diferente de AAAA-MM-DD", status_code=422)
+    
     select_pessoas = f"SELECT apelido from public.pessoas where apelido = '{pessoas.apelido}'"
     select_response = conn.execute(text(select_pessoas)).fetchone()
         
