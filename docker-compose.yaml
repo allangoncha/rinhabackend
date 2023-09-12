@@ -53,7 +53,7 @@ services:
       - ./postgres.conf:/docker-entrypoint-initdb.d/postgres.conf
     command: postgres -c config_file=/docker-entrypoint-initdb.d/postgres.conf
     ports:
-      - 5432:5432
+      - 5433:5432
     deploy:
       resources:
         limits:
