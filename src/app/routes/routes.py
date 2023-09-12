@@ -134,4 +134,10 @@ async def searchPessoasByterm(t: str = None):
         return JSONResponse(content=response_list, status_code=200)
     else:
         return JSONResponse(content="Valor de t não pode ser vazio.", status_code=400)
-        
+
+@app.get('/contagem-pessoas')
+def contagemPessoas():
+    select_count = "select count(id) from public.pessoas;"
+    select_response = conn.execute(text(select_count)).fetchone()
+
+    return JSONResponse(content={"Count" : f"{select_response[0]}" }, status_code=200)
