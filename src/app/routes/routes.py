@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, text
+from fastapi import Query
 import os, uuid
 
 #Load Env's
@@ -24,6 +25,13 @@ conn = engine.connect()
 
 #Models
 class Pessoas(BaseModel):
+    apelido: str
+    nome: str 
+    nascimento: str #AAAA-MM-DD
+    stack: Optional[List[str]]
+
+class Pessoa(BaseModel):
+    id: str
     apelido: str
     nome: str 
     nascimento: str #AAAA-MM-DD
@@ -63,7 +71,7 @@ async def pessoas(pessoas: Pessoas):
                 "Exception": {e}
                 }
 
-@app.get("/pessoas/{id_pessoa}")
+@app.get("/pessoas/{id_pessoa}", response_model=Pessoa)
 async def searchPessoasById(id_pessoa: str):
     select_idpessoa = f"SELECT * from public.pessoas where id = '{id_pessoa}'"
     select_response = conn.execute(text(select_idpessoa)).fetchall()
@@ -91,3 +99,39 @@ async def searchPessoasById(id_pessoa: str):
     
     
     return JSONResponse(content=response, status_code=404)
+
+@app.get("/pessoas")
+async def searchPessoasByterm(t: str = None):
+    select_termobusca = f"SELECT * from public.pessoas where busca_trgm like '%{t.lower()}%' limit 50;"
+    select_response = conn.execute(text(select_termobusca)).fetchall()
+    
+    if t != "":
+        
+        if len(select_response) == 0:
+            return JSONResponse(content=[], status_code=200)
+        
+        else:    
+            response_list = []
+            
+            for pessoa in select_response:
+                id_pessoa = pessoa[0]
+                apelido = pessoa[1]
+                nome = pessoa[2]
+                nascimento = pessoa[3]
+                stack = pessoa[4]
+                
+                pessoa = {
+                    "id": id_pessoa,
+                    "apelido": apelido,
+                    "nome": nome,
+                    "nascimento": nascimento,
+                    "stack": stack,
+                }
+                
+                response_list.append(pessoa)
+            
+            
+        return JSONResponse(content=response_list, status_code=200)
+    else:
+        return JSONResponse(content="Valor de t não pode ser vazio.", status_code=400)
+        
