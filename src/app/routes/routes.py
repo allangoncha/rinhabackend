@@ -57,7 +57,9 @@ async def pessoas(pessoas: Pessoas):
         
     else:
         stack_array = 'null'
-        
+    if isinstance(pessoas.apelido, int):
+        return JSONResponse(content="Apelido deve ser do tipo string.", status_code=400)
+    
     if pessoas.apelido == None:
         return JSONResponse(content="Apelido deve ser diferente de null.", status_code=422)
     
