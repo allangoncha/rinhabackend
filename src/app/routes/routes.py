@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, text
-from fastapi import Query
-import os, uuid, redis, re
+import os, uuid, redis, re, json
 
 #Redis config
 pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
@@ -76,21 +75,39 @@ async def pessoas(pessoas: Pessoas):
         conn.execute(text(insert_pessoas))
         conn.commit()
 
+        redis.set(f'{id_pessoas}', 
+            str({   
+            "id": str(id_pessoas), 
+            "apelido": pessoas.apelido, 
+            "nome": pessoas.nome, 
+            "nascimento": pessoas.nascimento, 
+            "stack": stack_array
+                    }
+                )
+            )
+
         headers = {"Location": f'pessoas/{id_pessoas}'}
         content = "Hello, world!"
         
         return JSONResponse(content=content, headers=headers, status_code=201)
         
     except Exception as e:
-        return {
-                "Exception": {e}
-                }
+        return JSONResponse(content={"Exception": f'{e}'}, status_code=422)
 
 @app.get("/pessoas/{id_pessoa}", response_model=Pessoa)
 async def searchPessoasById(id_pessoa: str):
     select_idpessoa = f"SELECT * from public.pessoas where id = '{id_pessoa}'"
     select_response = conn.execute(text(select_idpessoa)).fetchall()
     
+    #Redis Validation
+    if redis.exists(f'{id_pessoa}'):
+        response = json.loads(redis.get(f'{id_pessoa}').decode().replace("'", '"'))
+    
+        if response['stack'] == 'null':
+                response['stack'] = None
+                
+        return JSONResponse(content=response, status_code=200)
+
     if bool(select_response):
         
         for row in select_response:
@@ -112,8 +129,7 @@ async def searchPessoasById(id_pessoa: str):
     
             return JSONResponse(content=response, status_code=200)
     
-    
-    return JSONResponse(content=response, status_code=404)
+    return JSONResponse(content='Not Found', status_code=404)
 
 @app.get("/pessoas")
 async def searchPessoasByterm(t: str = None):
