@@ -4,10 +4,6 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, text
-<<<<<<< HEAD
-=======
-from fastapi import Query
->>>>>>> ee44ea7a06837352c7c704cea141808976085d5f
 import os, uuid, redis, re, json
 
 #Redis config
