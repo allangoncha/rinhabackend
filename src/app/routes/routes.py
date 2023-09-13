@@ -2,7 +2,7 @@ from src.app import app
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 from sqlalchemy import create_engine, text
 import os, uuid, redis, re, json
 
@@ -28,8 +28,8 @@ conn = engine.connect()
 
 #Models
 class Pessoas(BaseModel):
-    apelido: str
-    nome: str 
+    apelido: Any
+    nome: Any
     nascimento: str #AAAA-MM-DD
     stack: Optional[List]
 
@@ -58,8 +58,17 @@ async def pessoas(pessoas: Pessoas):
     else:
         stack_array = 'null'
         
+    if pessoas.apelido == None:
+        return JSONResponse(content="Apelido deve ser diferente de null.", status_code=422)
+    
     if len(pessoas.apelido) > 32:
         return JSONResponse(content="Apelido excede o tamanho máximo de 32 caracteres.", status_code=400)
+    
+    if isinstance(pessoas.nome, int):
+        return JSONResponse(content="Nome deve ser do tipo string.", status_code=400)
+    
+    if pessoas.nome == None:
+        return JSONResponse(content="Nome deve ser diferente de null.", status_code=422)
     
     if len(pessoas.nome) > 100 or isinstance(pessoas.nome, int):
         return JSONResponse(content="Nome excede o tamanho máximo de 100 caracteres.", status_code=400)
