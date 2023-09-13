@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, text
 from fastapi import Query
-import os, uuid, redis, re
+import os, uuid, redis, re, json
 
 #Redis config
 pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
@@ -76,21 +76,32 @@ async def pessoas(pessoas: Pessoas):
         conn.execute(text(insert_pessoas))
         conn.commit()
 
+        redis.hmset(f'{id_pessoas}', 
+            {   
+            'id': f"{id_pessoas}", 
+            'apelido': f"{pessoas.apelido}", 
+            'nome': f"{pessoas.nome}", 
+            'nascimento': f"{pessoas.nascimento}", 
+            'stack': f"{pessoas.stack}"
+            })
+
         headers = {"Location": f'pessoas/{id_pessoas}'}
         content = "Hello, world!"
         
         return JSONResponse(content=content, headers=headers, status_code=201)
         
     except Exception as e:
-        return {
-                "Exception": {e}
-                }
+        return JSONResponse(content={"Exception": f'{e}'}, status_code=422)
 
 @app.get("/pessoas/{id_pessoa}", response_model=Pessoa)
 async def searchPessoasById(id_pessoa: str):
     select_idpessoa = f"SELECT * from public.pessoas where id = '{id_pessoa}'"
     select_response = conn.execute(text(select_idpessoa)).fetchall()
     
+    #Redis Validation
+
+    redis.hgetall(f'{id_pessoa}')
+
     if bool(select_response):
         
         for row in select_response:
