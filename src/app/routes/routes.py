@@ -31,7 +31,7 @@ class Pessoas(BaseModel):
     apelido: str
     nome: str 
     nascimento: str #AAAA-MM-DD
-    stack: Optional[List[str]]
+    stack: Optional[List]
 
 class Pessoa(BaseModel):
     id: str
@@ -46,19 +46,27 @@ async def pessoas(pessoas: Pessoas):
 
     #Validations
     if pessoas.stack != None:
+        for i in pessoas.stack:
+            if isinstance(i, int):
+                return JSONResponse(content=f"Elemento da stack deve ser string e não inteiro.", status_code=400)        
+            
+            if len(i) > 32:
+                return JSONResponse(content=f"Elemento da stack excede o tamanho máximo de 32 caracteres.", status_code=400)        
+        
         stack_array = "{" + ",".join(pessoas.stack) + "}"
+        
     else:
         stack_array = 'null'
         
     if len(pessoas.apelido) > 32:
-        return JSONResponse(content="Apelido excede o tamanho máximo de 32 caracteres.", status_code=422)
+        return JSONResponse(content="Apelido excede o tamanho máximo de 32 caracteres.", status_code=400)
     
-    if len(pessoas.nome) > 100:
-        return JSONResponse(content="Nome excede o tamanho máximo de 100 caracteres.", status_code=422)
+    if len(pessoas.nome) > 100 or isinstance(pessoas.nome, int):
+        return JSONResponse(content="Nome excede o tamanho máximo de 100 caracteres.", status_code=400)
     
     regex = re.compile('^\d{4}-\d{2}-\d{2}$')
     if bool(regex.match(pessoas.nascimento)) == False:
-        return JSONResponse(content="Formato do campo nascimento diferente de AAAA-MM-DD", status_code=422)
+        return JSONResponse(content="Formato do campo nascimento diferente de AAAA-MM-DD", status_code=400)
     
     select_pessoas = f"SELECT apelido from public.pessoas where apelido = '{pessoas.apelido}'"
     select_response = conn.execute(text(select_pessoas)).fetchone()
