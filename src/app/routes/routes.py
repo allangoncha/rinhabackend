@@ -6,10 +6,6 @@ from typing import List, Optional, Any
 from sqlalchemy import create_engine, text
 import os, uuid, redis, re, json
 
-#Redis config
-pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
-redis = redis.Redis(connection_pool=pool)
-
 #Load Env's
 load_dotenv()
 HOST = os.environ.get("host")
@@ -17,6 +13,12 @@ PORT = os.environ.get("port")
 USER = os.environ.get("user")
 PASS = os.environ.get("pass")
 DBNAME = os.environ.get("dbname")
+R_HOST = os.environ.get("r_host")
+R_PORT = os.environ.get("r_port")
+
+#Redis config
+pool = redis.ConnectionPool(host=R_HOST, port=R_PORT, db=0)
+redis = redis.Redis(connection_pool=pool)
 
 #DB Connection
 SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASS}@{HOST}:{PORT}/{DBNAME}"
