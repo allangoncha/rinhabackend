@@ -23,7 +23,7 @@ redis = redis.Redis(connection_pool=pool)
 #DB Connection
 SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASS}@{HOST}:{PORT}/{DBNAME}"
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, pool_size=10
+    SQLALCHEMY_DATABASE_URL, pool_size=1000
 )
 
 conn = engine.connect()
