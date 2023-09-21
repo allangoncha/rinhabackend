@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   api1: # API - Instância 01
-    image: rinhabackend23
+    build: .
     hostname: api1
     depends_on:
       - db
@@ -14,7 +14,7 @@ services:
           memory: '0.5GB'
 
   api2: # API - Instância 01
-    image: rinhabackend23
+    build: .
     hostname: api2
     depends_on:
       - db
